@@ -20,4 +20,27 @@ for dbname in ['uni', 'subject', 'tag', 'user', 'question']:
     dbs[dbname] = db
 app.dbs = dbs
 
+## create the views
+#views = [('question', {
+#  "_id":"_design/views",
+#  "language": "javascript",
+#  "views":
+#  {
+#    "all": {
+#      "map": "function(doc) { emit(null, doc) }"
+#    },
+#    "by_id": {
+#      "map": "function(doc) { emit(doc._id, doc) }"
+#    },
+#    "by_tag": {
+#      "map": "function(doc) { for each (tag in doc.tags) { emit(tag, doc) } }"
+#    }
+#  }
+#})]
+#
+#for view_ in views:
+#    db, view = view_
+#    app.dbs[db].save(view)
+#    # dw about overiding, it is set rev
+
 import template.views
