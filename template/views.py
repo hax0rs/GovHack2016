@@ -12,8 +12,11 @@ def login_to(id):
 @app.route('/')
 def index():
     abc = ""
+    map_all = '''function(doc) {emit(doc._id, doc);}'''
     for i in app.dbs:
-        abc += "<p>Table: {}</p>".format(i)
+        abc += "<p><b>Table: {}</b></p>".format(i)
+        for row in app.dbs[i].query(map_all):
+            abc += "<p>{}</p>".format(row.value)
     return "Hello, Memes! {}".format(abc)
 
 # account management
@@ -136,3 +139,34 @@ def get_all_tags():
             obj['parent'] = row.value['parent']
         out.append(obj)
     return jsonify(*out)
+
+@app.route('/tag/top')
+def get_top_tags():
+    map_top = '''function(doc) { if( ! doc.parent ) emit(doc._id, doc);}'''
+    out = []
+    for row in app.dbs['tag'].query(map_top):
+        out.append({'id': row.value['_id'], 'text': row.value['text']})
+    return jsonify(*out)
+
+@app.route('/tag/child/<tid>')
+def get_child_tags(tid):
+    map_child = '''function(doc) {{ if( doc.parent === "{}" ) emit(doc._id, doc);}}'''.format(tid)
+    out = []
+    for row in app.dbs['tag'].query(map_child):
+        out.append({'id': row.value['_id'], 'text': row.value['text'], 'parent': tid})
+    return jsonify(*out)
+
+@app.route('/tag/<tid>')
+def get_tag(tid):
+    map_tag = '''function(doc) {{ if( doc._id === "{}" ) emit(doc._id, doc);}}'''.format(tid)
+    out = []
+    for row in app.dbs['tag'].query(map_tag):
+        obj = {'id': tid, 'text': row.value['text']}
+        if 'parent' in row.value:
+            obj['parent'] = row.value['parent']
+        out.append(obj)
+    return jsonify(*out)
+
+# questions
+
+
