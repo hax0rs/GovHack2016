@@ -25,7 +25,14 @@ def index():
 
 # account management
 
+"""
+@api {POST} /user/new Create a new user.
+@apiName NewUser
+@apiGroup User
 
+@apiExample {curl} CURL
+    curl
+"""
 @app.route('/user/new', methods=["POST"])
 def create_new_user():
     if request.method != "POST":
@@ -189,7 +196,23 @@ def get_questions_via(map_):
         out.append(obj)
     return jsonify(*out)
 
+"""
+@api {POST} /question/new Create a new question.
+@apiName NewQuestion
+@apiGroup Questions
 
+@apiExample {curl} CURL
+    curl -X POST -H "Content-Type: application/json" -d '{"type": "text", "body": "What is a spicy boi?", "ans": "A fireant", "exp": "Spicy boi > hot animal > fire ant", "tags": ["7b5cdd934757e92748787b8ed4000f5d", "7b5cdd934757e92748787b8ed4001949"]}' http://localhost/question/new
+
+@apiExample {json} JSON
+    {
+        "type": "text", 
+        "body": "What is a spicy boi?", 
+        "ans": "A fireant", "exp": "Spicy boi > hot animal > fire ant", 
+        "tags": ["7b5cdd934757e92748787b8ed4000f5d", "7b5cdd934757e92748787b8ed4001949"]
+    }
+
+"""
 @app.route('/question/new', methods=["POST"])
 def create_new_question():
     if request.method != "POST":
@@ -232,13 +255,41 @@ def create_new_question():
     doc_id, doc_rev = app.dbs["question"].save(new_record)
     return jsonify(**{"id": doc_id})
 
+"""
+@api {GET} /question/ Get questions.
+@apiName GetQuestions
+@apiGroup Questions
 
+@apiDescription Returns all the available questions.
+
+@apiExample {curl} CURL
+    curl http://127.0.0.1:5000/question/
+"""
 @app.route('/question/')
 def get_all_questions():
     map_all = '''function(doc) {emit(doc._id, doc);}'''
     return get_questions_via(map_all)
 
+"""
+@api {GET} /question/<question_id> Get question by ID.
+@apiName GetQuestionByID
+@apiGroup Questions
 
+@apiExample {curl} CURL
+    curl http://127.0.0.1:5000/question/b53e73f5422f46aabbe91fb6b2001642
+
+@apiSuccessExample {json} Success-Response:
+{
+  "ans": "A fireant",
+  "body": "What is a spicy boi?",
+  "exp": "Spicy boi > hot animal > fire ant",
+  "id": "b53e73f5422f46aabbe91fb6b2001642",
+  "tags": [
+    "7b5cdd934757e92748787b8ed4000f5d",
+    "7b5cdd934757e92748787b8ed4001949"
+  ]
+}
+"""
 @app.route('/question/<qid>')
 def get_question(qid):
     map_quest = '''function(doc) {{ if( doc._id === "{}" ) emit(doc._id, doc);}}'''.format(
@@ -246,6 +297,17 @@ def get_question(qid):
     return get_questions_via(map_quest)
 
 
+"""
+@api {GET} /question/tag/<tag_id> Get questions by tag.
+@apiName GetQuestionByTag
+@apiGroup Questions
+
+@apiDescription Returns all the questions that contain
+    the given tag.
+
+@apiExample {curl} CURL
+    curl http://127.0.0.1:5000/question/tag/7b5cdd934757e92748787b8ed4000f5d
+"""
 @app.route('/question/tag/<tid>')
 def get_questions_tag(tid):
     map_tag = '''function(doc) {{ if( doc.tags.indexOf("{}") != -1 ) emit(doc._id, doc);}}'''.format(tid)
@@ -287,7 +349,14 @@ def get_subjects_via(map_):
         out.append(obj)
     return jsonify(*out)
 
+"""
+@api {POST} /subject/new Creates a new subject.
+@apiName NewSubject
+@apiGroup Subject
 
+@apiExample {curl} Create new subject:
+    curl -X POST -H "Content-Type: application/json" -d '{"name":"csse2310", "uni":"UQ", "tags": ["7b5cdd934757e92748787b8ed4000f5d", "7b5cdd934757e92748787b8ed4001949"]}' http://localhost/subject/new
+"""
 @app.route('/subject/new', methods=["POST"])
 def create_new_subject():
     if request.method != "POST":
@@ -317,13 +386,41 @@ def create_new_subject():
     doc_id, doc_rev = app.dbs["subject"].save(new_record)
     return jsonify(**{"id": doc_id})
 
+"""
+@api {GET} /subject/ Returns list of subjects
+@apiName GetSubjects
+@apiGroup Subject
 
+@apiExample {curl} Get subjects
+    curl http://127.0.0.1:5000/subject/
+"""
 @app.route('/subject/')
 def get_all_subjects():
     map_all = '''function(doc) {emit(doc._id, doc);}'''
     return get_subjects_via(map_all)
 
+"""
+@api {GET} /subject/<subject_id> Get subject details.
+@apiName GetSubjectInfo
+@apiGroup Subject
+@apiParam {String} [subject_id] The subject identifier.
 
+@apiDescription Returns the details of the specified subject.
+
+@apiExample {curl} Get subject details via ID
+    curl http://127.0.0.1:5000/subject/b53e73f5422f46aabbe91fb6b2000429
+
+@apiSuccessExample {json} Success-Response:
+    {
+      "id": "b53e73f5422f46aabbe91fb6b2000429",
+      "name": "csse2310",
+      "tags": [
+        "7b5cdd934757e92748787b8ed4000f5d",
+        "7b5cdd934757e92748787b8ed4001949"
+      ],
+      "uni": "UQ"
+    }
+"""
 @app.route('/subject/<sid>')
 def get_subject(sid):
     map_sub = '''function(doc) {{ if( doc._id === "{}" ) emit(doc._id, doc);}}'''.format(
@@ -331,6 +428,41 @@ def get_subject(sid):
     return get_subjects_via(map_sub)
 
 
+"""
+@api {GET} /subject/uni/<uni_id> Uni Subjects
+@apiName GetUniSubjects
+@apiGroup Subject
+@apiParam {String} [uni] The identifier for the specified
+    university.
+
+@apiDescription Returns all the subjects available
+    at a given uni.
+
+@apiExample {curl} Get all subjects at a given uni
+    curl http://127.0.0.1:5000/subject/uni/UQ
+
+@apiSuccessExample {json} Success-Response:
+    [
+        {
+        "id": "b53e73f5422f46aabbe91fb6b2000429",
+        "name": "csse2310",
+        "tags": [
+        "7b5cdd934757e92748787b8ed4000f5d",
+        "7b5cdd934757e92748787b8ed4001949"
+        ],
+            "uni": "UQ"
+        },
+        {
+        "id": "b53e73f5422f46aabbe91fb6b2001124",
+        "name": "csse2310",
+        "tags": [
+            "7b5cdd934757e92748787b8ed4000f5d",
+            "7b5cdd934757e92748787b8ed4001949"
+        ],
+        "uni": "UQ"
+        }
+    ]
+"""
 @app.route('/subject/uni/<uni>')
 def get_subjects_uni(uni):
     map_uni = '''function(doc) {{ if( doc.uni === "{}" ) emit(doc._id, doc);}}'''.format(
