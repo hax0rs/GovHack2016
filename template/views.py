@@ -342,7 +342,8 @@ def get_questions_via(map_):
     out = []
     for row in app.dbs['question'].query(map_):
         obj = {'id': row.value['_id'], 'body': row.value['body'],
-               'ans': row.value['ans'], 'tags': row.value['tags']}
+               'ans': row.value['ans'], 'tags': row.value['tags'],
+               'author': row.value['author']}
         if row.value['type'] == 'mcq':
             obj['mcans'] = row.value['mcans']
         if 'exp' in row.value:
@@ -382,6 +383,7 @@ def create_new_question():
         return jsonify(**{"Error": "JSON for posting fam"})
 
     new_record = {}
+    new_record['author'] = session['id']
 
     if "type" not in data or not data["type"]:
         return jsonify(**{"Error": "Needs a type param"})
