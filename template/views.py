@@ -343,7 +343,7 @@ def get_questions_via(map_):
     for row in app.dbs['question'].query(map_):
         obj = {'id': row.value['_id'], 'body': row.value['body'],
                'ans': row.value['ans'], 'tags': row.value['tags'],
-               'author': row.value['author']}
+               'subjects': row.value['subjects'], 'author': row.value['author']}
         if row.value['type'] == 'mcq':
             obj['mcans'] = row.value['mcans']
         if 'exp' in row.value:
@@ -364,7 +364,8 @@ def get_questions_via(map_):
         "type": "text",
         "body": "What is a spicy boi?",
         "ans": "A fireant", "exp": "Spicy boi > hot animal > fire ant",
-        "tags": ["7b5cdd934757e92748787b8ed4000f5d", "7b5cdd934757e92748787b8ed4001949"]
+        "tags": ["7b5cdd934757e92748787b8ed4000f5d", "7b5cdd934757e92748787b8ed4001949"],
+        "subjects": ["ashjdgasjhkdgasd1231uhg123f123gd"]
     }
 
 """
@@ -409,6 +410,11 @@ def create_new_question():
         new_record["tags"] = data["tags"]
     else:
         new_record['tags'] = []
+
+    if "subjects" in data and data["subjects"]:
+        new_record["subjects"] = data["subjects"]
+    else:
+        new_record['subjects'] = []
 
     doc_id, doc_rev = app.dbs["question"].save(new_record)
     return jsonify(**{"id": doc_id})
