@@ -30,9 +30,21 @@ def index():
 @apiName NewUser
 @apiGroup User
 
+@apiDescription Attempts to create a new user and log them
+    in, returning an error if unsuccesful
+
 @apiExample {curl} CURL
-    curl
+curl -X POST -H "Content-Type: application/json" -d '{"email": "Test@example.com", "name": "Nicolaus", "password": "pa$$w0RD"}' http://localhost/user/new
+
+@apiExample {json} JSON
+    {
+        "email": "Test@example.com",
+        "name": "Nicolaus",
+        "password": "pa$$w0RD"
+    }
 """
+
+
 @app.route('/user/new', methods=["POST"])
 def create_new_user():
     if request.method != "POST":
@@ -46,8 +58,6 @@ def create_new_user():
         return jsonify(**{"Error": "JSON for posting fam"})
 
     new_record = {}
-
-    # TODO one person per email
 
     if "email" not in data or not data["email"]:
         return jsonify(**{"Error": "Needs a email param"})
@@ -73,6 +83,25 @@ def create_new_user():
 
     login_to(doc_id)
     return jsonify(**{"id": doc_id})
+
+
+"""
+@api {POST} /user/login Logs a user in
+@apiName LoginUser
+@apiGroup User
+
+@apiDescription Attempts to log the user in, returning
+    an error if unsuccesful
+
+@apiExample {curl} CURL
+curl -X POST -H "Content-Type: application/json" -d '{"email": "Test@example.com", "password": "pa$$w0RD"}' http://localhost/user/login
+
+@apiExample {json} JSON
+    {
+        "email": "Test@example.com",
+        "password": "pa$$w0RD"
+    }
+"""
 
 
 @app.route('/user/login', methods=['POST'])
@@ -109,6 +138,24 @@ def login():
     return jsonify(**{"Status": "You are logged in, keep those cookies"})
 
 
+"""
+@api {GET} /user/logout Logs the current user out
+@apiName LogoutUser
+@apiGroup User
+
+@apiDescription Logs the current user out if one
+    logged in, returning an error if one is not
+
+@apiExample {curl} Logout current user
+    curl http://127.0.0.1:5000/user/logout
+
+@apiSuccessExample {json} Success-Response:
+    {
+        "Status": "You are logged out"
+    }
+"""
+
+
 @app.route('/user/logout')
 def logout():
     if not logged_in():
@@ -127,6 +174,22 @@ def get_tags_via(map_):
             obj['parent'] = row.value['parent']
         out.append(obj)
     return jsonify(*out)
+
+
+"""
+@api {POST} /tag/new Create a new tag.
+@apiName NewTag
+@apiGroup Tags
+
+@apiExample {curl} CURL
+    curl -X POST -H "Content-Type: application/json" -d '{"text": "Computing"}' http://localhost/tag/new
+
+@apiExample {json} JSON
+    {
+        "text": "Computing"
+    }
+
+"""
 
 
 @app.route('/tag/new', methods=["POST"])
@@ -155,11 +218,58 @@ def create_new_tag():
     doc_id, doc_rev = app.dbs["tag"].save(new_record)
     return jsonify(**{"id": doc_id})
 
+"""
+@api {GET} /tag/ Get all tags
+@apiName GetAllTags
+@apiGroup Tags
+
+@apiDescription Returns all the tags, even child
+    tags
+
+@apiExample {curl} Get all tags
+    curl http://127.0.0.1:5000/tag/
+
+@apiSuccessExample {json} Success-Response:
+    [
+        {
+            "id": "7b5cdd934757e92748787b8ed4000f5d",
+            "text": "Computing"
+        },
+        {
+            "id": "7b5cdd934757e92748787b8ed4001949",
+            "parent": "7b5cdd934757e92748787b8ed4000f5d",
+            "text": "Linux"
+        }
+    ]
+
+"""
+
 
 @app.route('/tag/')
 def get_all_tags():
     map_all = '''function(doc) {emit(doc._id, doc);}'''
     return get_tags_via(map_all)
+
+
+"""
+@api {GET} /tag/top Get all the top level tags
+@apiName GetAllTopTags
+@apiGroup Tags
+
+@apiDescription Returns all the tags which do not have
+    parents and as such are root nodes on the tag tree
+
+@apiExample {curl} Get all top tags
+    curl http://127.0.0.1:5000/tag/top
+
+@apiSuccessExample {json} Success-Response:
+    [
+        {
+            "id": "7b5cdd934757e92748787b8ed4000f5d",
+            "text": "Computing"
+        }
+    ]
+"""
 
 
 @app.route('/tag/top')
@@ -168,11 +278,55 @@ def get_top_tags():
     return get_tags_via(map_top)
 
 
+"""
+@api {GET} /tag/child/<tag_id> Get all child tags of a certain tag
+@apiName GetAllChildTags
+@apiGroup Tags
+@apiParam {String} tag_id The id of the parent tag
+
+@apiDescription Returns all the tags which parent tag
+    is passed in the param
+
+@apiExample {curl} Get all child tags of a root tag
+    curl http://127.0.0.1:5000/tag/child/7b5cdd934757e92748787b8ed4000f5d
+
+@apiSuccessExample {json} Success-Response:
+    [
+        {
+            "id": "7b5cdd934757e92748787b8ed4001949",
+            "parent": "7b5cdd934757e92748787b8ed4000f5d",
+            "text": "Linux"
+        }
+    ]
+"""
+
+
 @app.route('/tag/child/<tid>')
 def get_child_tags(tid):
     map_child = '''function(doc) {{ if( doc.parent === "{}" ) emit(doc._id, doc);}}'''.format(
         tid)
     return get_tags_via(map_child)
+
+
+"""
+@api {GET} /tag/<tag_id> Get info on a certain tag
+@apiName GetTag
+@apiGroup Tags
+@apiParam {String} tag_id The id of the tag
+
+@apiDescription Returns info on the selected tag
+
+@apiExample {curl} Get all child tags of a root tag
+    curl http://127.0.0.1:5000/tag/7b5cdd934757e92748787b8ed4000f5d
+
+@apiSuccessExample {json} Success-Response:
+    [
+        {
+            "id": "7b5cdd934757e92748787b8ed4000f5d",
+            "text": "Computing"
+        }
+    ]
+"""
 
 
 @app.route('/tag/<tid>')
@@ -206,13 +360,15 @@ def get_questions_via(map_):
 
 @apiExample {json} JSON
     {
-        "type": "text", 
-        "body": "What is a spicy boi?", 
-        "ans": "A fireant", "exp": "Spicy boi > hot animal > fire ant", 
+        "type": "text",
+        "body": "What is a spicy boi?",
+        "ans": "A fireant", "exp": "Spicy boi > hot animal > fire ant",
         "tags": ["7b5cdd934757e92748787b8ed4000f5d", "7b5cdd934757e92748787b8ed4001949"]
     }
 
 """
+
+
 @app.route('/question/new', methods=["POST"])
 def create_new_question():
     if request.method != "POST":
@@ -265,6 +421,8 @@ def create_new_question():
 @apiExample {curl} CURL
     curl http://127.0.0.1:5000/question/
 """
+
+
 @app.route('/question/')
 def get_all_questions():
     map_all = '''function(doc) {emit(doc._id, doc);}'''
@@ -290,6 +448,8 @@ def get_all_questions():
   ]
 }
 """
+
+
 @app.route('/question/<qid>')
 def get_question(qid):
     map_quest = '''function(doc) {{ if( doc._id === "{}" ) emit(doc._id, doc);}}'''.format(
@@ -302,12 +462,16 @@ def get_question(qid):
 @apiName GetQuestionByTag
 @apiGroup Questions
 
+@apiParam {String} tag_id The tag id to search with
+
 @apiDescription Returns all the questions that contain
     the given tag.
 
 @apiExample {curl} CURL
     curl http://127.0.0.1:5000/question/tag/7b5cdd934757e92748787b8ed4000f5d
 """
+
+
 @app.route('/question/tag/<tid>')
 def get_questions_tag(tid):
     map_tag = '''function(doc) {{ if( doc.tags.indexOf("{}") != -1 ) emit(doc._id, doc);}}'''.format(tid)
@@ -357,6 +521,8 @@ def get_subjects_via(map_):
 @apiExample {curl} Create new subject:
     curl -X POST -H "Content-Type: application/json" -d '{"name":"csse2310", "uni":"UQ", "tags": ["7b5cdd934757e92748787b8ed4000f5d", "7b5cdd934757e92748787b8ed4001949"]}' http://localhost/subject/new
 """
+
+
 @app.route('/subject/new', methods=["POST"])
 def create_new_subject():
     if request.method != "POST":
@@ -394,6 +560,8 @@ def create_new_subject():
 @apiExample {curl} Get subjects
     curl http://127.0.0.1:5000/subject/
 """
+
+
 @app.route('/subject/')
 def get_all_subjects():
     map_all = '''function(doc) {emit(doc._id, doc);}'''
@@ -403,7 +571,7 @@ def get_all_subjects():
 @api {GET} /subject/<subject_id> Get subject details.
 @apiName GetSubjectInfo
 @apiGroup Subject
-@apiParam {String} [subject_id] The subject identifier.
+@apiParam {String} subject_id The subject identifier.
 
 @apiDescription Returns the details of the specified subject.
 
@@ -421,6 +589,8 @@ def get_all_subjects():
       "uni": "UQ"
     }
 """
+
+
 @app.route('/subject/<sid>')
 def get_subject(sid):
     map_sub = '''function(doc) {{ if( doc._id === "{}" ) emit(doc._id, doc);}}'''.format(
@@ -432,7 +602,7 @@ def get_subject(sid):
 @api {GET} /subject/uni/<uni_id> Uni Subjects
 @apiName GetUniSubjects
 @apiGroup Subject
-@apiParam {String} [uni] The identifier for the specified
+@apiParam {String} uni The identifier for the specified
     university.
 
 @apiDescription Returns all the subjects available
@@ -463,6 +633,8 @@ def get_subject(sid):
         }
     ]
 """
+
+
 @app.route('/subject/uni/<uni>')
 def get_subjects_uni(uni):
     map_uni = '''function(doc) {{ if( doc.uni === "{}" ) emit(doc._id, doc);}}'''.format(
